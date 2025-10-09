@@ -48,7 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Check file size
-    if ($_FILES["brandLogo"]["size"] > 1024000) {
+    if ($_FILES["brandLogo"]["size"] > 5000000) {
       echo "Sorry, your file is too large.";
       $uploadOk = 0;
     }
