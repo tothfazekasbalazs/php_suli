@@ -1,87 +1,146 @@
+<?php
+
+// 
+
+$servername = "localhost";
+$username = "php_tesztelo";
+$password = "_0ZOss-L!]YIP)dc";
+$dbname = "php_suli";
+
+// Create connection
+$conn = new mysqli($servername, $username, $password, $dbname);
+// Check connection
+if ($conn->connect_error) {
+  die("Connection failed: " . $conn->connect_error);
+}
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+  if(isset($_POST['id'])) {
+    $sql = "UPDATE cars SET brand = '".$_REQUEST['brand']."', 
+            stock = ".$_REQUEST['stock'].", sold = ".$_REQUEST['sold']."
+            WHERE id = ".$_POST['id'];
+  }
+  else {
+    $sql = "INSERT INTO cars (brand, stock, sold) 
+    VALUES ('".$_REQUEST['brand']."',".$_REQUEST['stock'].",".$_REQUEST['sold'].")";
+  }
+  $result = $conn->query($sql);
+
+  if(!isset($_POST['id'])) {
+    $_POST['id'] = $conn->insert_id;
+  }
+
+  if($_FILES["brandLogo"]["tmp_name"]) {
+    /* file upload */
+    $target_dir = "logos/";
+    $target_file = $target_dir . $_POST['id'];
+    $uploadOk = 1;
+    $imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
+    $check = getimagesize($_FILES["brandLogo"]["tmp_name"]);
+    if($check !== false) {
+      echo "File is an image - " . $check["mime"] . ".";
+      $fileExt = preg_split("/\//",$check["mime"]);
+      $target_file = $target_file.".". $fileExt[1];
+      $uploadOk = 1;
+    } else {
+      echo "File is not an image.";
+      $uploadOk = 0;
+    }
+
+    // Check file size
+    if ($_FILES["brandLogo"]["size"] > 1024000) {
+      echo "Sorry, your file is too large.";
+      $uploadOk = 0;
+    }
+
+    // Allow certain file formats
+    if($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg"
+    && $imageFileType != "gif" ) {
+      echo "Sorry, only JPG, JPEG, PNG & GIF files are allowed.";
+      $uploadOk = 0;
+    }
+
+    // Check if $uploadOk is set to 0 by an error
+    if ($uploadOk == 0) {
+      echo "Sorry, your file was not uploaded.";
+    // if everything is ok, try to upload file
+    } 
+    else {
+      if (move_uploaded_file($_FILES["brandLogo"]["tmp_name"], $target_file)) {
+        echo "The file ". htmlspecialchars( basename( $_FILES["brandLogo"]["name"])). " has been uploaded.";
+      } else {
+        echo "Sorry, there was an error uploading your file.";
+      }
+    }
+  }
+
+
+}
+elseif($_SERVER["REQUEST_METHOD"] == "GET" and isset($_GET['action'])) {
+  switch($_GET['action']) {
+    case "delete":
+      $sql = "DELETE FROM cars WHERE id = ".$_REQUEST['id'];
+      $result = $conn->query($sql);
+    break;
+
+    case "update":
+      $sql = "SELECT id, brand, stock, sold FROM cars WHERE id = ".$_REQUEST['id'];
+      $result = $conn->query($sql);
+      if($row = $result->fetch_assoc()) {
+        $update = $row;
+      }
+    break;
+  }
+
+}
+?> 
 <!DOCTYPE html>
-
-<html lang="hu">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="./style.css">
-  <title>PHP Teszt</title>
-</head>
-
+<html>
 <body>
 
+<h1>My third PHP page</h1>
 
-  <form method="post" action="<?php echo $_SERVER["PHP_SELF"]; ?>">
-    <label for="name">Name</label>
-    <input type="text" name="name">
-    <label for="stock">Stock</label>
-    <input type="text" name="stock">
-    <label for="sold">Sold</label>
-    <input type="sold" name="sold">
-    <input type="submit" value="Add">
-  </form>
+<form method="post" action="<?php echo $_SERVER['PHP_SELF'];?>" enctype="multipart/form-data">
+  <?php
 
-  <table>
-    <tr>
-      <th>Name</th>
-      <th>Stock</th>
-      <th>Sold</th>
-    </tr>
-    <?php
-
-  $servername = "localhost";
-  $username = "php_tesztelo";
-  $password = "mRs_uxss!aiLU4(I";
-  $dbname = "myDB";
-
-    // Create connection
-    $conn = new mysqli($servername, $username, $password, $dbname);
-    // Check connection
-    if ($conn->connect_error) {
-      die("Connection failed: " . $conn->connect_error);
-    } else {
-      echo"dwwd";
-    }
-
-
-    $cars = array(
-      array("Volvo", 22, 18),
-      array("BMW", 22, 18),
-      array("Toyota", 22, 18),
-    );
-
-
-    foreach ($cars as $car) {
-      $sql = "INSERT INTO cars (brand, stock, sold) VALUES (".$car[0].", ".$car[1].", ".$car[2].")";
-
-      if ($conn->query($sql) === TRUE) {
-        $last_id = $conn->insert_id;
-        echo "New record created successfully<br>";
-      } else {
-        echo "Error: " . $sql . "<br>" . $conn->error;
-      }
-    }
-
-
-
-    if ($_SERVER["REQUEST_METHOD"] == "POST") {
-      $name = htmlspecialchars($_REQUEST["name"]);
-      $stock = htmlspecialchars($_REQUEST["stock"]);
-      $sold = htmlspecialchars($_REQUEST["sold"]);
-      array_push($cars, [$name, $stock, $sold]);
-    }
-
-    for ($i = 0; $i < count($cars); $i++) {
-      echo "<tr>";
-      for ($j = 0; $j < 3; $j++) {
-        echo "<td>" . $cars[$i][$j] . "</td>";
-      }
-      echo "</tr>";
-    }
+  if(isset($update)) {
+    echo "
+        Car brand: <input type=\"text\" name=\"brand\" value=\"".$update['brand']."\"><br>
+        stock: <input type=\"text\" name=\"stock\" value=\"".$update['stock']."\"><br>
+        sold: <input type=\"text\" name=\"sold\" value=\"".$update['sold']."\"><br>
+        <input type=\"hidden\" name=\"id\" value=\"".$update['id']."\"><br>";
+  }
+  else {
     ?>
-  </table>
+    Car brand: <input type="text" name="brand"><br>
+    stock: <input type="text" name="stock"><br>
+    sold: <input type="text" name="sold"><br>
+    <?php
+  }
+?>
+  <input type="file" name="brandLogo" id="fileToUpload"><br>
+  <input type="submit" value="Mentés">
+</form>
+<table>
+<?php
+$sql = "SELECT id, brand, stock, sold FROM cars";
+$result = $conn->query($sql);
+
+if ($result->num_rows > 0) {
+  // output data of each row
+  while($row = $result->fetch_assoc()) {
+        echo '  <tr>';
+        foreach($row as $data) {
+            echo "      <td>$data</td>";
+        }
+        echo "      <td><a href=\"index.php?action=delete&id=".$row['id']."\">Törlés</a></td>";
+        echo "      <td><a href=\"index.php?action=update&id=".$row['id']."\">Módosítás</a></td>";
+    echo '  </tr>';
+  }
+} 
+
+?>
+</table>
 
 </body>
-
 </html>

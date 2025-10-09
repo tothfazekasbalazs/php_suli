@@ -1,4 +1,0 @@
-        $servername = "localhost";
-        $username = "php_tesztelo";
-        $password = "mRs_uxss!aiLU4(I";
-        $dbname = "myDB";
